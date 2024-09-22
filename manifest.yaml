@@ -1,0 +1,86 @@
+# Manifest version
+version: 0.1.0
+# Define the package manager to be used
+package_manager:
+  add_pkg_cmd: pacman -S $packages -y
+  del_pkg_cmd: pacman -Rns $packages -y
+# Base packages needed for the .dotfiles
+packages:
+  # Arch Linux
+  - base
+  - linux
+  - linux-firmware
+  # Window Manager
+  - hyprland
+  # Render/App support (D-Bus, gtk, qt, XDG vars)
+  - qt5-wayland
+  - qt6-wayland
+  - xorg-server
+  - xorg-xinit
+  - xdg-desktop-portal-hyprland
+  - xdg-utils
+  # Login Manager & Display Manager
+  - ly
+  # Lockscreen utility
+  - hyprlock
+  # Screensaver utility
+  - hypridle
+  # Network Manager
+  - networkmanager
+  - wpa_supplicant
+  # Audio Manager
+  - pipewire
+  - pipewire-alsa
+  - pipewire-audio
+  - pipewire-jack
+  - pipewire-pulse
+  - wireplumber
+  # File Manager
+  - dolphin
+  # Panels (topbar, taskbar-dock)
+  - waybar
+  # Power options
+  - nwg-bar
+  # Wallpaper setter
+  - swww
+  # Application runner
+  - wofi
+  # Notification Manager
+  - swaync
+  # Terminal emulator
+  - kitty
+  # Screenshot utility
+  - grim
+  - slurp
+  - jq
+  # Fonts
+  - ttf-nerd-fonts-symbols
+  - noto-fonts-emoji
+  # Miscellaneous
+  - sudo
+  - neofetch
+  - nano
+  - gnome-calendar
+  - vlc
+# Trivial application packages meant for plug-n-play
+additional_packages:
+  pacman:
+    add_pkg_cmd: pacman -S $packages
+    packages:
+      - discord
+      - firefox
+  yay:
+    prepare: pacman -S base-devel -y && git clone https://aur.archlinux.org/yay.git /tmp/yay
+    execute: cd /tmp/yay && makepkg -si
+    cleanup: cd ~ && rm -rf /tmp/yay
+    add_pgk_cmd: yay -S $packages
+    packages:
+      - notion-app-electron
+# Definition of how the .dotfiles will be installed
+dotfiles:
+  .config:
+    source:
+    target:
+    prepare:
+    execute:
+    cleanup:

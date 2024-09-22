@@ -1,0 +1,25 @@
+{
+    "reload_style_on_change": true,
+    "output": "HDMI-A-2",
+    "layer": "top",
+    "position": "bottom",
+    "height": 23,
+    "margin": 0,
+    "spacing": 10,
+    "border-size": 2,
+    "padding": 10,
+    "modules-center": [
+        "wlr/taskbar",
+    ],
+    "wlr/taskbar": {
+        "all-outputs": true,
+        "format": "{icon}",
+        "icon-size": 46,
+        "markup": false,
+        "tooltip": false,
+        "ignore-list": [],
+        "on-click": "minimize-raise",
+        "on-click-right": "close",
+        "rewrite": {},
+    },
+}
