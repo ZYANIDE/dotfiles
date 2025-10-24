@@ -149,7 +149,6 @@ install_package_manager() (
 
 # install_pm_packages <add_pkg_script> <packages>
 install_pm_packages() (
-  # TODO: turn --asdep package to --asexplicit if already installed (due to --needed not reinstalling it)
   add_pkg="$1"; packages="$2";
   printf 'Installing %s packages:\n%s\n' "$package_manager" "$packages" >> /dev/tty
   PKGS="$packages" safe_run sh -c "$add_pkg"
@@ -281,5 +280,3 @@ printf 'Executing post-script commands...\n' >> /dev/tty
 safe_run sh -c "$(yq -r '.Commands // ""' "$manifest_path")"
 
 printf '\n' >> /dev/tty
-# TODO: setup grub-btrfs?
-# TODO: gtklock gives critical error; fix it
