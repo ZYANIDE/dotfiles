@@ -190,7 +190,7 @@ upsert_managed_files() (
    ###################'
 
 PROGRAM_NAME="$(basename "$0")"
-PROGRAM_VERSION="v0.1.0"
+PROGRAM_VERSION="v0.2.0"
 PROGRAM_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 print_version() (
@@ -200,14 +200,16 @@ print_version() (
 print_help() (
   printf '\n' >> /dev/tty
   printf 'Usage %s <command> [subcommands...] [operands...] [options...]\n' "$PROGRAM_NAME" >> /dev/tty
+  printf ' -p --prune                             : Remove installed packages not listed in the manifest\n' >> /dev/tty
   printf ' -t --dry-run                           : Dry-run test\n' >> /dev/tty
   printf ' -v --version                           : Shows the program version\n' >> /dev/tty
   printf ' -h --help                              : Shows this prompt\n' >> /dev/tty
   printf '\n' >> /dev/tty
 )
 
-while getopts ':tvh' OPTKEY; do
+while getopts ':ptvh' OPTKEY; do
   case "$OPTKEY" in
+    p) PRUNE=true ;;
     t) DRY_RUN=true ;;
     v) print_version && die 0 ;;
     h) print_help && die 0 ;;
@@ -242,6 +244,20 @@ for package_manager in $package_managers; do
   install_pm_packages "$add_pkg" "$pm_packages"
 done
 
+if [ "$PRUNE" = true ]; then
+  printf '\n' >> /dev/tty
+  printf 'Searching for undesired packages...' >> /dev/tty
+  unlisted_packages="$(xor_list "$(pacman -Qeq | tr '\n' ' ')" "$(echo "$packages" | awk '{print $2}')" | tr '\n' ' ')"
+  orphaned_packages="$(pacman -Qdtq || true)"
+  if [ -n "$unlisted_packages" ] || [ -n "$orphaned_packages" ]; then
+    printf ' found some.\n' >> /dev/tty
+    printf 'Pruning...\n' >> /dev/tty
+    safe_run sudo pacman -Rns $unlisted_packages $orphaned_packages --noconfirm
+  else
+    printf ' nothing found.\nSkipping pruning...\n' >> /dev/tty
+  fi
+fi
+
 # Compares which packages are new (not yet in manifest) and/or missing (in manifest but not yet installed)
 new_packages="$(xor_list "$(pacman -Qeq | tr '\n' ' ')" "$(echo "$packages" | awk '{print $2}')" | tr '\n' ' ')"
 printf "\n${COLOR_RED}Package(s) missing in manifest:\n%s${COLOR_RESET}\n" "${new_packages:-[None]}"
@@ -265,11 +281,5 @@ printf 'Executing post-script commands...\n' >> /dev/tty
 safe_run sh -c "$(yq -r '.Commands // ""' "$manifest_path")"
 
 printf '\n' >> /dev/tty
-# TODO: install dependencies --asdeps (if not already explicitly installed)
-# TODO: remove all orphan packages
-# TODO: setup hostname in /etc/hostname & /etc/hosts
-# TODO: setup time, keyboard-layout, locale & timezone
 # TODO: setup grub-btrfs?
 # TODO: gtklock gives critical error; fix it
-# TODO: option to remove all non-manifest-defined packages (even when explicit)
-# TODO: what mode is the script running in? (factory, update, backup, restore)
