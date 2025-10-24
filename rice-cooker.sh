@@ -150,8 +150,8 @@ install_package_manager() (
 # install_pm_packages <add_pkg_script> <packages>
 install_pm_packages() (
   add_pkg="$1"; packages="$2";
-  printf 'Installing %s packages:\n%s\n' "$package_manager" "$packages" >> /dev/tty
-  PKGS="$packages" safe_run sh -c "$add_pkg"
+  printf 'Installing %s packages:\n%s\n' "$package_manager" "${packages:-"[None]"}" >> /dev/tty
+  if [ -n "$packages" ]; then PKGS="$packages" safe_run sh -c "$add_pkg"; fi
 )
 
 # enable_systemd_services <service>
@@ -189,7 +189,7 @@ upsert_managed_files() (
    ###################'
 
 PROGRAM_NAME="$(basename "$0")"
-PROGRAM_VERSION="v0.3.0"
+PROGRAM_VERSION="v0.3.1"
 PROGRAM_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 print_version() (
@@ -220,7 +220,6 @@ done
 
 assert_dependency yq
 
-# TODO: what if some configs in the manifest are empty
 MANIFEST_PATH="${MANIFEST_PATH:-"$PROGRAM_PATH/manifest.yaml"}"
 if ! [ -f "$MANIFEST_PATH" ]; then die 1 "The manifest could not be found at $MANIFEST_PATH"; fi
 
@@ -230,8 +229,8 @@ if [ "$enableMultilib" = 'true' ]; then
   enable_multilib
 fi
 
-packages="$(yq -r '.Packages[]' "$MANIFEST_PATH" | tr ' ' '\n' | awk '{gsub(/[\/]/, " "); print}')"
-package_managers="$(yq -r '.PackageManagers | keys | .[]' "$MANIFEST_PATH")"
+packages="$(yq -r '(.Packages // [])[]' "$MANIFEST_PATH" | tr ' ' '\n' | awk '{gsub(/[\/]/, " "); print}')"
+package_managers="$(yq -r '(.PackageManagers // []) | keys | .[]' "$MANIFEST_PATH")"
 for package_manager in $package_managers; do
   prepare="$(yq -r ".PackageManagers.$package_manager.prepare // \"\"" "$MANIFEST_PATH")"
   install="$(yq -r ".PackageManagers.$package_manager.install // \"\"" "$MANIFEST_PATH")"
@@ -268,11 +267,11 @@ printf "\n${COLOR_GREEN}Package(s) to install:\n%s${COLOR_RESET}\n" "${missing_p
 
 files="$(yq -r '(.Files // {}) | to_entries | .[] | .key as $parent | .value | "\(.mode) \($parent) \(.source)"' "$MANIFEST_PATH")"
 if [ -n "$files" ]; then
-  printf '\n' >> /dev/tty 
+  printf '\n' >> /dev/tty
   upsert_managed_files "$files"
 fi
 
-services="$(yq -r '.Services[]' "$MANIFEST_PATH")"
+services="$(yq -r '(.Services // [])[]' "$MANIFEST_PATH")"
 for service in $services; do
   printf '\n' >> /dev/tty
   enable_systemd_service "$service"
