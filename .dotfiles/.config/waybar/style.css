@@ -4,9 +4,9 @@
   font-size: 16px;
   font-weight: 500;
   min-height: 0;
-  padding-right: 0px;
-  padding-left: 0px;
-  padding-bottom: 0px;
+  padding-right: 0;
+  padding-left: 0;
+  padding-bottom: 0;
 }
 @define-color background-color #1a1b26;
 @define-color text-color #c6d0f5;
@@ -18,16 +18,16 @@
 /* --- Waybar Container --- */
 #waybar {
   background: transparent;
-  padding: 0px;
-  margin: 0px;
+  padding: 0;
+  margin: 0;
 }
 
 /* --- Default Module Styling --- */
 .module {
   background-color: @background-color;
   color: @text-color;
-  padding: 0.3rem 0.7rem;
-  margin: 5px 0px;
+  padding: 0.5rem 0.7rem;
+  margin: 0.5rem 0 0 0;
   border-radius: 0;
   box-shadow: none;
   min-width: 0;
@@ -39,14 +39,18 @@
   background-color: @text-hover-color;
 }
 
-.modules-right > :first-child > .module, .modules-center > :first-child > .module {
-  margin-left: 0px;
+.modules-left > :first-child > .module,
+.modules-center > :first-child > .module,
+.modules-right > :first-child > .module {
+  padding-left: 1rem;
   border-top-left-radius: 6px;
   border-bottom-left-radius: 6px;
 }
 
-.modules-left > :last-child > .module, .modules-center > :last-child > .module {
-  margin-right: 0px;
+.modules-left > :nth-last-child(2) > .module,
+.modules-center > :last-child > .module,
+.modules-right > :last-child > .module {
+  padding-right: 1rem;
   border-top-right-radius: 6px;
   border-bottom-right-radius: 6px;
 }
@@ -63,20 +67,10 @@ tooltip, tooltip * {
 }
 
 /* --- Specific Module Styling --- */
-#custom-uptime, #cpu, #memory {
-  border-radius: 6px;
-  margin: 5px 5px;
-}
-
-#custom-sys-metrics {
-  border-top-right-radius: 6px;
-  border-bottom-right-radius: 6px;
-}
-
 #taskbar {
   background-color: transparent;
   padding: 0 0;
-  margin: 5px 0;
+  margin: 5px 0 0 0;
 }
 #taskbar button {
   padding: 0 5px;
