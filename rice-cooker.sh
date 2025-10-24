@@ -119,9 +119,9 @@ safe_run() (
   else "$@"; fi
 )
 
-: '##################
-   ###   ROUTINES ###
-   ##################'
+: '####################
+   ###   ROUTINES   ###
+   ####################'
 
 # enable_multilib
 enable_multilib() (
@@ -175,7 +175,7 @@ upsert_managed_files() (
     mode="$(echo "$file" | awk '{print $1}')"
     target="$(echo "$file" | awk '{print $2}' | sed "s|~|$HOME|g; s|\$HOME|$HOME|g")"
     source="$(echo "$file" | awk '{print $3}' | sed "s|~|$HOME|g; s|\$HOME|$HOME|g")"
-    source="$(join_paths "$manifest_path/.." "$source")"
+    source="$(join_paths "$MANIFEST_PATH/.." "$source")"
     # TODO: dont stop script when diff return exit code 1
     # if ! [ "$(echo $source)" = "$source" ]; then diff -rq "${source%/*}" "$target"
     # else diff -rq "$source" "$target"; fi
@@ -189,7 +189,7 @@ upsert_managed_files() (
    ###################'
 
 PROGRAM_NAME="$(basename "$0")"
-PROGRAM_VERSION="v0.2.0"
+PROGRAM_VERSION="v0.3.0"
 PROGRAM_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 print_version() (
@@ -199,15 +199,17 @@ print_version() (
 print_help() (
   printf '\n' >> /dev/tty
   printf 'Usage %s <command> [subcommands...] [operands...] [options...]\n' "$PROGRAM_NAME" >> /dev/tty
-  printf ' -p --prune                             : Remove installed packages not listed in the manifest\n' >> /dev/tty
+  printf ' -m --manifest                          : Path to the manifest\n' >> /dev/tty
+  printf ' -p --prune                             : Remove unmanaged, orphaned packages and artefacts\n' >> /dev/tty
   printf ' -t --dry-run                           : Dry-run test\n' >> /dev/tty
   printf ' -v --version                           : Shows the program version\n' >> /dev/tty
   printf ' -h --help                              : Shows this prompt\n' >> /dev/tty
   printf '\n' >> /dev/tty
 )
 
-while getopts ':ptvh' OPTKEY; do
+while getopts ':m:ptvh' OPTKEY; do
   case "$OPTKEY" in
+    m) MANIFEST_PATH="$OPTARG" ;;
     p) PRUNE=true ;;
     t) DRY_RUN=true ;;
     v) print_version && die 0 ;;
@@ -219,22 +221,23 @@ done
 assert_dependency yq
 
 # TODO: what if some configs in the manifest are empty
-manifest_path="$PROGRAM_PATH/manifest.yaml"
+MANIFEST_PATH="${MANIFEST_PATH:-"$PROGRAM_PATH/manifest.yaml"}"
+if ! [ -f "$MANIFEST_PATH" ]; then die 1 "The manifest could not be found at $MANIFEST_PATH"; fi
 
-enableMultilib=$(yq -r '.General.multilib' "$manifest_path")
+enableMultilib=$(yq -r '.General.multilib' "$MANIFEST_PATH")
 if [ "$enableMultilib" = 'true' ]; then
   printf '\n' >> /dev/tty
   enable_multilib
 fi
 
-packages="$(yq -r '.Packages[]' "$manifest_path" | tr ' ' '\n' | awk '{gsub(/[\/]/, " "); print}')"
-package_managers="$(yq -r '.PackageManagers | keys | .[]' "$manifest_path")"
+packages="$(yq -r '.Packages[]' "$MANIFEST_PATH" | tr ' ' '\n' | awk '{gsub(/[\/]/, " "); print}')"
+package_managers="$(yq -r '.PackageManagers | keys | .[]' "$MANIFEST_PATH")"
 for package_manager in $package_managers; do
-  prepare="$(yq -r ".PackageManagers.$package_manager.prepare // \"\"" "$manifest_path")"
-  install="$(yq -r ".PackageManagers.$package_manager.install // \"\"" "$manifest_path")"
-  cleanup="$(yq -r ".PackageManagers.$package_manager.cleanup // \"\"" "$manifest_path")"
-  verify="$(yq -r ".PackageManagers.$package_manager.verify // \"\"" "$manifest_path")"
-  add_pkg="$(yq -r ".PackageManagers.$package_manager.add_pkg // \"\"" "$manifest_path")"
+  prepare="$(yq -r ".PackageManagers.$package_manager.prepare // \"\"" "$MANIFEST_PATH")"
+  install="$(yq -r ".PackageManagers.$package_manager.install // \"\"" "$MANIFEST_PATH")"
+  cleanup="$(yq -r ".PackageManagers.$package_manager.cleanup // \"\"" "$MANIFEST_PATH")"
+  verify="$(yq -r ".PackageManagers.$package_manager.verify // \"\"" "$MANIFEST_PATH")"
+  add_pkg="$(yq -r ".PackageManagers.$package_manager.add_pkg // \"\"" "$MANIFEST_PATH")"
   pm_packages="$(echo "$packages" | awk -v pm="$package_manager" '$1 == pm {print $2}' | tr '\n' ' ')"
 
   printf '\n' >> /dev/tty
@@ -263,13 +266,13 @@ printf "\n${COLOR_RED}Package(s) missing in manifest:\n%s${COLOR_RESET}\n" "${ne
 missing_packages="$(xor_list "$(echo "$packages" | awk '{print $2}')" "$(pacman -Qeq | tr '\n' ' ')" | tr '\n' ' ')"
 printf "\n${COLOR_GREEN}Package(s) to install:\n%s${COLOR_RESET}\n" "${missing_packages:-[None]}"
 
-files="$(yq -r '(.Files // {}) | to_entries | .[] | .key as $parent | .value | "\(.mode) \($parent) \(.source)"' "$manifest_path")"
+files="$(yq -r '(.Files // {}) | to_entries | .[] | .key as $parent | .value | "\(.mode) \($parent) \(.source)"' "$MANIFEST_PATH")"
 if [ -n "$files" ]; then
   printf '\n' >> /dev/tty 
   upsert_managed_files "$files"
 fi
 
-services="$(yq -r '.Services[]' "$manifest_path")"
+services="$(yq -r '.Services[]' "$MANIFEST_PATH")"
 for service in $services; do
   printf '\n' >> /dev/tty
   enable_systemd_service "$service"
@@ -277,6 +280,6 @@ done
 
 printf '\n' >> /dev/tty
 printf 'Executing post-script commands...\n' >> /dev/tty
-safe_run sh -c "$(yq -r '.Commands // ""' "$manifest_path")"
+safe_run sh -c "$(yq -r '.Commands // ""' "$MANIFEST_PATH")"
 
 printf '\n' >> /dev/tty
