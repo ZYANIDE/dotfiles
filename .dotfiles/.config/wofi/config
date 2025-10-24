@@ -1,6 +1,0 @@
-prompt=Search
-allow_images=true
-insensitive=true
-show=drun
-image_size=32
-matching=contains

@@ -1,86 +1,145 @@
 # Manifest version
-version: 0.1.0
-# Define the package manager to be used
-package_manager:
-  add_pkg_cmd: pacman -S $packages -y
-  del_pkg_cmd: pacman -Rns $packages -y
-# Base packages needed for the .dotfiles
-packages:
-  # Arch Linux
-  - base
-  - linux
-  - linux-firmware
-  # Window Manager
-  - hyprland
-  # Render/App support (D-Bus, gtk, qt, XDG vars)
-  - qt5-wayland
-  - qt6-wayland
-  - xorg-server
-  - xorg-xinit
-  - xdg-desktop-portal-hyprland
-  - xdg-utils
-  # Login Manager & Display Manager
-  - ly
-  # Lockscreen utility
-  - hyprlock
-  # Screensaver utility
-  - hypridle
-  # Network Manager
-  - networkmanager
-  - wpa_supplicant
-  # Audio Manager
-  - pipewire
-  - pipewire-alsa
-  - pipewire-audio
-  - pipewire-jack
-  - pipewire-pulse
-  - wireplumber
-  # File Manager
-  - dolphin
-  # Panels (topbar, taskbar-dock)
-  - waybar
-  # Power options
-  - nwg-bar
-  # Wallpaper setter
-  - swww
-  # Application runner
-  - wofi
-  # Notification Manager
-  - swaync
-  # Terminal emulator
-  - kitty
-  # Screenshot utility
-  - grim
-  - slurp
-  - jq
-  # Fonts
-  - ttf-nerd-fonts-symbols
-  - noto-fonts-emoji
-  # Miscellaneous
-  - sudo
-  - neofetch
-  - nano
-  - gnome-calendar
-  - vlc
-# Trivial application packages meant for plug-n-play
-additional_packages:
+Version: 0.1.0
+General:
+  multilib: true
+PackageManagers:
   pacman:
-    add_pkg_cmd: pacman -S $packages
-    packages:
-      - discord
-      - firefox
+    add_pkg: sudo pacman -S $PKGS --noconfirm --needed
   yay:
-    prepare: pacman -S base-devel -y && git clone https://aur.archlinux.org/yay.git /tmp/yay
-    execute: cd /tmp/yay && makepkg -si
-    cleanup: cd ~ && rm -rf /tmp/yay
-    add_pgk_cmd: yay -S $packages
-    packages:
-      - notion-app-electron
-# Definition of how the .dotfiles will be installed
-dotfiles:
-  .config:
-    source:
-    target:
-    prepare:
-    execute:
-    cleanup:
+    prepare: |
+      rm -rf /tmp/yay
+      pacman -S base-devel --noconfirm --needed
+      pacman -S git --noconfirm --needed --asdeps
+      git clone https://aur.archlinux.org/yay.git /tmp/yay
+    install: makepkg -sircD /tmp/yay --noconfirm
+    cleanup: |
+      rm -rf /tmp/yay
+      sudo pacman -Rs yay-debug --noconfirm
+    verify: pacman -Q yay
+    add_pkg: yay -S $PKGS --noconfirm --noredownload --norebuild --needed
+Packages:
+  # Dependencies
+  - yay/yay
+  - pacman/yq
+  # Arch Linux
+  - pacman/base
+  - pacman/base-devel
+  - pacman/linux
+  - pacman/linux-headers
+  - pacman/linux-firmware
+  - pacman/efibootmgr
+  - pacman/grub
+#  - pacman/grub-btrfs
+  # System Stability
+  - pacman/amd-ucode
+  - pacman/intel-ucode
+  - pacman/mesa
+  - pacman/mesa-utils
+  - pacman/vulkan-icd-loader
+  - pacman/vulkan-radeon
+  - pacman/vulkan-intel
+  - pacman/vulkan-nouveau
+  - pacman/lib32-mesa
+  - pacman/lib32-vulkan-icd-loader
+  - pacman/lib32-vulkan-radeon
+  - pacman/lib32-vulkan-intel
+  - pacman/lib32-vulkan-nouveau
+  - pacman/xf86-video-amdgpu
+  - pacman/xf86-video-intel
+  - pacman/xf86-video-ati
+  - pacman/xf86-video-nouveau
+  # Compositor
+  - pacman/niri
+  - pacman/xwayland-satellite
+  - pacman/xdg-desktop-portal-gtk
+  - pacman/xdg-desktop-portal-gnome
+  - pacman/gnome-keyring
+#  - pacman/qt5-wayland
+#  - pacman/qt6-wayland
+#  - pacman/xorg-server
+#  - pacman/xorg-xinit
+#  - pacman/xdg-desktop-portal-hyprland
+#  - pacman/xdg-utils
+#  - pacman/archlinux-xdg-menu
+#  - pacman/gtk4
+  # Basic utility
+#  - pacman/ly
+#  - pacman/sddm
+  - pacman/gtklock
+  - pacman/gtklock-powerbar-module
+  - pacman/gtklock-userinfo-module
+  - pacman/swayidle
+  - pacman/networkmanager
+  - pacman/wpa_supplicant
+  - pacman/pipewire
+  - pacman/wireplumber
+  - pacman/pipewire-audio
+  - pacman/pipewire-alsa
+  - pacman/pipewire-pulse
+  - pacman/pipewire-jack
+  - pacman/playerctl
+  - pacman/waybar
+  - pacman/swww
+  - pacman/dunst
+  - pacman/alacritty
+  - pacman/ttf-liberation
+  - pacman/ttf-nerd-fonts-symbols
+  - pacman/noto-fonts-emoji
+  - pacman/noto-fonts-cjk
+  - pacman/sudo
+  - pacman/unzip
+  - pacman/btrfs-progs
+  - pacman/cups
+  - pacman/hplip
+  # Basic utlity GUI
+  - yay/sherlock-launcher-bin
+  - pacman/nm-connection-editor
+  - pacman/pavucontrol
+  - pacman/dolphin
+  - pacman/htop
+  - pacman/loupe
+  - pacman/vim
+  - pacman/nano
+  - pacman/vlc
+  - pacman/vlc-plugins-all
+  - pacman/gimp
+  # Miscellaneous
+  - pacman/virtualbox
+  - pacman/virtualbox-host-dkms
+  - pacman/virtualbox-guest-iso  
+#  - yay/jetbrains-toolbox
+  - pacman/git
+#  - yay/nvm
+  - pacman/openssh
+#  - pacman/docker
+#  - pacman/docker-compose
+  - pacman/steam
+#  - yay/r2modman-bin
+  - pacman/firefox
+  - pacman/discord
+  - pacman/spotify-launcher
+#  - pacman/qbittorrent
+Files:
+  ~/.config/dunst/:
+    source: .dotfiles/.config/dunst/*
+    mode: "000744"
+  ~/.config/gtklock/:
+    source: .dotfiles/.config/gtklock/*
+    mode: "000744"
+  ~/.config/niri/:
+    source: .dotfiles/.config/niri/*
+    mode: "000744"
+  ~/.config/swww/:
+    source: .dotfiles/.config/swww/*
+    mode: "000744"
+  ~/.config/sherlock/:
+    source: .dotfiles/.config/sherlock/*
+    mode: "000744"
+  ~/.config/waybar/:
+    source: .dotfiles/.config/waybar/*
+    mode: "000744"
+Services:
+  - NetworkManager.service
+  - cups.service
+Commands: |
+  sherlock init

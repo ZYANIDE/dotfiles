@@ -1,0 +1,179 @@
+{
+  "output": "HDMI-A-2",
+  "layer": "top",
+  "position": "top",
+  "height": 32,
+  "spacing": 0,
+  "modules-left": [
+    "custom/notification",
+    "custom/pacman",
+    "group/sys-metrics",
+    "wlr/taskbar"
+  ],
+  "modules-center": [
+    "clock"
+  ],
+  "modules-right": [
+    "bluetooth",
+    "network",
+    "pulseaudio",
+    "custom/music",
+    "backlight",
+    "battery",
+    "group/power-menu"
+  ],
+  "bluetooth": {
+    "format": "󰂲",
+    "format-on": "{icon}",
+    "format-off": "{icon}", 
+    "format-connected":"{icon}",
+    "format-icons":{
+      "on":"󰂯",
+      "off": "󰂲",
+      "connected": "󰂱"
+    },
+    "on-click": "blueman-manager",
+    "tooltip-format-connected":"{device_enumerate}"
+  },
+  "network": {
+    "format-wifi": "{}",
+    "format-ethernet": "󰈀 ",
+    "format-disconnected": "󰤠 ",
+    "interval": 5,
+    "format-icons": ["󰤟", "󰤢", "󰤥", "󰤨"],
+    "tooltip-format-wifi": "{essid} ({signalStrength}%)",
+    "tooltip-format-ethernet": "{ifname} 🖧 ",
+    "on-click": "nm-connection-editor"
+  },
+  "pulseaudio": {
+    "format": "{icon}  {volume}%",
+    "format-muted": "",
+    "format-icons": ["", "", " "],
+    "on-click": "pavucontrol"
+  },
+  "custom/music": {
+    "format": "󰝚  {}",
+    "escape": true,
+    "interval": 5,
+    "tooltip": false,
+    "exec": "playerctl metadata --format='{{ artist }} - {{ title }}' 2> /dev/null",
+    "on-click": "playerctl play-pause",
+    "max-length": 50
+  },
+  "backlight": {
+    "format": "{icon}  {percent}%",
+    "format-icons": ["","󰃜", "󰃛", "󰃞","󰃝","󰃟","󰃠"],
+    "tooltip": false
+  },
+  "battery": {
+    "interval": 2,
+    "states": {
+      // "good": 95,
+      "warning": 30,
+      "critical": 15
+    },
+    "format": "{icon}  {capacity}%",
+    "format-full": "{icon}  {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-plugged": " {capacity}%",
+    "format-alt": "{icon} {time}",
+    // "format-good": "", // An empty format will hide the module
+    // "format-full": "",
+    "format-icons": ["", "", "", "", ""],
+    "bat-compatibility": true
+  },
+  "clock": {
+    "timezone": "CET",
+    "tooltip": false,
+    "format": "{:%H:%M  -  %A, %d}",
+    "interval": 1
+  },
+  "wlr/taskbar": {
+    "all-outputs": true,
+    "icon-size": 24,
+    "on-click": "activate"
+  },
+  "group/sys-metrics": {
+    "orientation": "horizontal",
+    "drawer": {
+      "transition-duration": 600,
+      "transition-left-to-right": true,
+      "click-to-reveal": true
+    },
+    "modules": ["custom/sys-metrics", "custom/uptime", "cpu", "memory", "temperature"]
+  },
+  "custom/sys-metrics": {
+    "format": "",
+    "tooltip": false
+  },
+  "custom/uptime": {
+    "format": "{}",
+    "format-icon": [""],
+    "tooltip": false,
+    "interval": 1600,
+    "exec": "sh $HOME/.config/waybar/scripts/uptime.sh"
+  },
+  "cpu": {
+    "interval": 1,
+    "format": "  {icon0}{icon1}{icon2}{icon3} {usage:>2}%",
+    "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"],
+    "on-click": "alacritty -e htop"
+  },
+  "memory": {
+    "interval": 30,
+    "format": "  {used:0.1f}G/{total:0.1f}G",
+    "tooltip-format": "Memory"
+  },
+  "temperature": {
+    "critical-threshold": 80,
+    "format": ""
+  },
+  "group/power-menu": {
+    "orientation": "horizontal",
+    "drawer": {
+      "transition-duration": 600,
+      "transition-left-to-right": false,
+      "click-to-reveal": false
+    },
+    "modules": ["custom/power", "custom/reboot", "custom/sleep", "custom/lock"]
+  },
+  "custom/lock": {
+    "format": "",
+    "on-click": "loginctl lock-session",
+    "tooltip": true,
+    "tooltip-format": "Lock Screen"
+  },
+  "custom/sleep": {
+    "format": "󰤄",
+    "on-click": "systemctl suspend",
+    "tooltip": true,
+    "tooltip-format": "Sleep"
+  },
+  "custom/reboot": {
+    "format": "",
+    "on-click": "systemctl reboot",
+    "tooltip": true,
+    "tooltip-format": "Reboot"
+  },
+  "custom/power": {
+    "format": "",
+    "on-click": "systemctl poweroff",
+    "tooltip": true,
+    "tooltip-format": "Power Off"
+  },
+  "custom/pacman": {
+    "format": "󰅢 {}",
+    "interval": 30,
+    "exec": "pacman -Qu | wc -l",
+    "exec-if": "exit 0",
+    "on-click": "alacritty -e bash -c 'sudo pacman -Syu; echo Done - Press enter to exit; read'; pkill -SIGRTMIN+8 waybar",
+    "signal": 8,
+    "tooltip": false
+  },
+  "custom/notification": {
+    "tooltip": false,
+    "format": "",
+    "on-click": "swaync-client -t -sw",
+    "escape": true
+  }
+}

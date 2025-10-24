@@ -1,0 +1,108 @@
+/* --- Global Styles --- */
+* {
+  font-family: 'SF Pro Text', 'Inter', 'Segoe UI, NotoSans Nerd Font', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  min-height: 0;
+  padding-right: 0px;
+  padding-left: 0px;
+  padding-bottom: 0px;
+}
+@define-color background-color #1a1b26;
+@define-color text-color #c6d0f5;
+@define-color text-disabled-color #888888;
+@define-color text-hover-color #292a35;
+@define-color tooltip-text-color #dddddd;
+@define-color tooltip-background-color #1a1b26;
+
+/* --- Waybar Container --- */
+#waybar {
+  background: transparent;
+  padding: 0px;
+  margin: 0px;
+}
+
+/* --- Default Module Styling --- */
+.module {
+  background-color: @background-color;
+  color: @text-color;
+  padding: 0.3rem 0.7rem;
+  margin: 5px 0px;
+  border-radius: 0;
+  box-shadow: none;
+  min-width: 0;
+  border: none;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.module:hover {
+  background-color: @text-hover-color;
+}
+
+.modules-right > :first-child > .module, .modules-center > :first-child > .module {
+  margin-left: 0px;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.modules-left > :last-child > .module, .modules-center > :last-child > .module {
+  margin-right: 0px;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+/* --- Tooltip Styles --- */
+tooltip, tooltip * {
+  background-color: @tooltip-background-color;
+  color: @tooltip-text-color;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+/* --- Specific Module Styling --- */
+#custom-uptime, #cpu, #memory {
+  border-radius: 6px;
+  margin: 5px 5px;
+}
+
+#custom-sys-metrics {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+#taskbar {
+  background-color: transparent;
+  padding: 0 0;
+  margin: 5px 0;
+}
+#taskbar button {
+  padding: 0 5px;
+}
+
+/* --- Legacy Styling (not by me) --- */
+#network.disconnected {
+  color: #e78284;
+}
+
+#bluetooth {
+  color: #888888;
+  font-size: 16px;
+}
+#bluetooth.on {
+  color: #2196f3;
+}
+#bluetooth.connected {
+  color: #99d1db;
+}
+#battery {
+  color: #99d1db;;
+}
+#battery.charging {
+  color: #a6d189;
+}
+#battery.warning:not(.charging) {
+  color: #e78284;
+}

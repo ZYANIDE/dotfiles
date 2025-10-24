@@ -1,0 +1,364 @@
+// This config is in the KDL format: https://kdl.dev
+// "/-" comments out the following node.
+// Check the wiki for a full description of the configuration:
+// https://yalter.github.io/niri/Configuration:-Introduction
+
+/*
+################
+### MONITORS ###
+################
+*/
+
+output "HDMI-A-2" {
+    // off
+    mode "2560x1440@59.95100"
+    scale 1
+    transform "normal"
+    position x=0 y=0
+    focus-at-startup
+    // variable-refresh-rate
+}
+
+output "HDMI-A-1" {
+    // off
+    mode "1920x1080@60"
+    scale 1
+    transform "normal"
+    position x=-1920 y=360
+    focus-at-startup
+    // variable-refresh-rate
+}
+
+/*
+#################
+### AUTOSTART ###
+#################
+*/
+
+// TODO: niri msg action power-off-monitors
+spawn-at-startup "bash" "-c" "swayidle -w timeout 600 'loginctl lock-session' timeout 900 'systemctl suspend' before-sleep 'loginctl lock-session' lock 'cd ~/.config/gtklock && pidof gtklock || gtklock'"
+spawn-at-startup "bash" "-c" "swww-daemon"
+spawn-at-startup "bash" "-c" "swww img ~/.config/swww/wallpaper.png"
+spawn-at-startup "bash" "-c" "waybar"
+
+/*
+#############################
+### ENVIRONMENT VARIABLES ###
+#############################
+*/
+
+screenshot-path "~/Pictures/screenshots/Screenshot_%Y-%m-%d-%H:%M:%S.png"
+
+cursor {
+    // TODO: set cursor size & theme
+    // xcursor-theme "breeze_cursors"
+    // xcursor-size 16
+    hide-when-typing
+    hide-after-inactive-ms 5000
+}
+
+overview {
+    zoom 0.5
+    backdrop-color "#222"
+    workspace-shadow {
+        off
+    }
+}
+
+clipboard {
+    disable-primary
+}
+
+hotkey-overlay {
+    skip-at-startup
+    // hide-not-bound
+}
+
+/*
+#####################
+### LOOK AND FEEL ###
+#####################
+*/
+
+layout {
+    gaps 8
+    center-focused-column "never"
+    // always-center-single-column
+    // empty-workspace-above-first
+    default-column-display "normal"
+    preset-column-widths {
+        proportion 0.33333
+	proportion 0.5
+	proportion 0.66667
+	proportion 0.99999
+    }
+    default-column-width {
+        proportion 0.5
+    }
+    // preset-window-heights { }
+    focus-ring {
+        // off
+	width 4
+	active-color "#33ccffee"
+	inactive-color "#0000"
+	urgent-color "#9b0000"
+	// active-gradient from="#33ccffee" to="#00ff99ee" angle=45 relative-to="workspace-view"
+	// inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
+    }
+    border {
+        off
+	width 4
+	active-color "#33ccffee"
+	inactive-color "#0000"
+	urgent-color "#9b0000"
+	// active-gradient from="#33ccffee" to="#00ff99ee" angle=45 relative-to="workspace-view"
+	// inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
+    }
+    shadow {
+        // on
+	softness 30
+	spread 5
+	offset x=0 y=5
+	draw-behind-window true
+        color "#0007"
+	inactive-color "#0000"
+    }
+    // tab-indicator { }
+    // insert-hint { }
+    struts {
+        // left 64
+	// right 64
+	// top 64
+	// bottom 64
+    }
+}
+
+// Uncomment this line to ask the clients to omit their client-side decorations if possible.
+// If the client will specifically ask for CSD, the request will be honored.
+// Additionally, clients will be informed that they are tiled, removing some client-side rounded corners.
+// This option will also fix border/focus ring drawing behind some semitransparent windows.
+// After enabling or disabling this, you need to restart the apps for this to take effect.
+// prefer-no-csd
+
+// You can change the path where screenshots are saved.
+// A ~ at the front will be expanded to the home directory.
+// The path is formatted with strftime(3) to give you the screenshot date and time.
+
+// You can also set this to null to disable saving screenshots to disk.
+// screenshot-path null
+
+// Animation settings.
+// The wiki explains how to configure individual animations:
+// https://yalter.github.io/niri/Configuration:-Animations
+animations {
+    // Uncomment to turn off all animations.
+    // off
+
+    // Slow down all animations by this factor. Values below 1 speed them up instead.
+    // slowdown 3.0
+}
+
+// Window rules let you adjust behavior for individual windows.
+// Find more information on the wiki:
+// https://yalter.github.io/niri/Configuration:-Window-Rules
+
+// Work around WezTerm's initial configure bug
+// by setting an empty default-column-width.
+window-rule {
+    // This regular expression is intentionally made as specific as possible,
+    // since this is the default config, and we want no false positives.#
+    // You can get away with just app-id="wezterm" if you want.
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    default-column-width {}
+}
+
+// Open the Firefox picture-in-picture player as floating by default.
+window-rule {
+    // This app-id regular expression will work for both:
+    // - host Firefox (app-id is "firefox")
+    // - Flatpak Firefox (app-id is "org.mozilla.firefox")
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+
+// Example: block out two password managers from screen capture.
+// (This example rule is commented out with a "/-" in front.)
+/-window-rule {
+    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
+    match app-id=r#"^org\.gnome\.World\.Secrets$"#
+
+    block-out-from "screen-capture"
+
+    // Use this instead if you want them visible on third-party screenshot tools.
+    // block-out-from "screencast"
+}
+
+// Example: enable rounded corners for all windows.
+// (This example rule is commented out with a "/-" in front.)
+/-window-rule {
+    geometry-corner-radius 12
+    clip-to-geometry true
+}
+
+/*
+#############
+### INPUT ###
+#############
+*/
+
+input {
+    keyboard {
+        xkb {}
+	numlock
+    }
+    touchpad {
+        // off
+	tap
+	// dwt
+	// dwtp
+	// drag false
+	// drag-lock
+	natural-scroll
+	// accel-speed 0.2
+	// accel-profile "flat"
+	// scroll-method "two-finger"
+	// disabled-on-external-mouse
+    }
+    mouse {
+        // off
+	// natural-scroll
+	// accel-speed 0.2
+	// accel-profile "flat"
+	// scroll-method "no-scroll"
+    }
+    trackpoint {
+        // off
+	// natural-scroll
+	// accel-speed 0.2
+	// accel-profile "flat"
+	// scroll-method "on-button-down"
+	// scroll-button 273
+	// scroll-button-lock
+	// middle-emulation
+    }
+}
+
+/*
+###################
+### KEYBINDINGS ###
+###################
+*/
+
+binds {
+    Mod+Return  hotkey-overlay-title="Open a Terminal"    { spawn "alacritty"; }
+    Mod+Space   hotkey-overlay-title="Run an Application" { spawn "sherlock"; }
+    Ctrl+Alt+Q  hotkey-overlay-title="Lock Screen"     { spawn-sh "loginctl lock-session"; }
+    // TODO: check for race conditions
+    // TODO: Maybe use other hotkey for sleep and lock since vim hjkl movements are also used
+    Mod+E        hotkey-overlay-title="Open File Manager" { spawn "dolphin"; }
+    // TODO: power_options?
+    Mod+O       { toggle-overview; }
+    Mod+Tab     { focus-monitor-next; }
+    Mod+Q       { close-window; }
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+    Ctrl+Alt+Delete { quit; }
+    Mod+Shift+E { quit; }
+    Print { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print { screenshot-window; }
+
+    Mod+R { switch-preset-column-width; }
+    Mod+F { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+    Mod+V { toggle-window-floating; }
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Equal { set-column-width "+10%"; }
+
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"; }
+    XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+    XF86AudioPlay        allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    XF86AudioPause       allow-when-locked=true { spawn-sh "playerctl pause"; }
+    XF86AudioStop        allow-when-locked=true { spawn-sh "playerctl stop"; }
+    XF86AudioNext        allow-when-locked=true { spawn-sh "playerctl next"; }
+    XF86AudioPrev        allow-when-locked=true { spawn-sh "playerctl previous"; }
+
+    Mod+Left    { focus-column-or-monitor-left; }
+    Mod+Down    { focus-window-or-workspace-down; }
+    Mod+Up      { focus-window-or-workspace-up; }
+    Mod+Right   { focus-column-or-monitor-right; }
+    Mod+H       { focus-column-or-monitor-left; }
+    Mod+J       { focus-window-or-workspace-down; }
+    Mod+K       { focus-window-or-workspace-up; }
+    Mod+L       { focus-column-or-monitor-right; }
+    Mod+Ctrl+Left       { focus-monitor-left; }
+    Mod+Ctrl+Down       { focus-workspace-down; }
+    Mod+Ctrl+Up         { focus-workspace-up; }
+    Mod+Ctrl+Right      { focus-monitor-right; }
+    Mod+Ctrl+H          { focus-monitor-left; }
+    Mod+Ctrl+J          { focus-workspace-down; }
+    Mod+Ctrl+K          { focus-workspace-up; }
+    Mod+Ctrl+L          { focus-monitor-right; }
+
+    // TODO: niri has a bug putting moving column and column 2 of new monitor when moving to the right monitor
+    Mod+Shift+Left    { spawn-sh "sh ~/.config/niri/consume-or-expel-window-left-or-move-to-monitor-left.sh"; }
+    Mod+Shift+Down    { move-window-down-or-to-workspace-down; }
+    Mod+Shift+Up      { move-window-up-or-to-workspace-up; }
+    Mod+Shift+Right   { spawn-sh "sh ~/.config/niri/consume-or-expel-window-right-or-move-to-monitor-right.sh"; }
+    Mod+Shift+H       { spawn-sh "sh ~/.config/niri/consume-or-expel-window-left-or-move-to-monitor-left.sh"; }
+    Mod+Shift+J       { move-window-down-or-to-workspace-down; }
+    Mod+Shift+K       { move-window-up-or-to-workspace-up; }
+    Mod+Shift+L       { spawn-sh "sh ~/.config/niri/consume-or-expel-window-right-or-move-to-monitor-right.sh"; }
+    Mod+Ctrl+Shift+Left         { move-workspace-to-monitor-left; }
+    Mod+Ctrl+Shift+Down         { move-workspace-down; }
+    Mod+Ctrl+Shift+Up           { move-workspace-up; }
+    Mod+Ctrl+Shift+Right	{ move-workspace-to-monitor-right; }
+    Mod+Ctrl+Shift+H            { move-workspace-to-monitor-left; }
+    Mod+Ctrl+Shift+J            { move-workspace-down; }
+    Mod+Ctrl+Shift+K            { move-workspace-up; }
+    Mod+Ctrl+Shift+L	        { move-workspace-to-monitor-right; }
+    Mod+BracketLeft     { consume-or-expel-window-left; }
+    Mod+BracketRight    { consume-or-expel-window-right; }
+
+    Mod+1       { focus-workspace 1; }
+    Mod+2       { focus-workspace 2; }
+    Mod+3       { focus-workspace 3; }
+    Mod+4       { focus-workspace 4; }
+    Mod+5       { focus-workspace 5; }
+    Mod+6       { focus-workspace 6; }
+    Mod+7       { focus-workspace 7; }
+    Mod+8       { focus-workspace 8; }
+    Mod+9       { focus-workspace 9; }
+    Mod+Shift+1       { move-window-to-workspace 1; }
+    Mod+Shift+2       { move-window-to-workspace 2; }
+    Mod+Shift+3       { move-window-to-workspace 3; }
+    Mod+Shift+4       { move-window-to-workspace 4; }
+    Mod+Shift+5       { move-window-to-workspace 5; }
+    Mod+Shift+6       { move-window-to-workspace 6; }
+    Mod+Shift+7       { move-window-to-workspace 7; }
+    Mod+Shift+8       { move-window-to-workspace 8; }
+    Mod+Shift+9       { move-window-to-workspace 9; }
+
+    Mod+Home { focus-column-first; }
+    Mod+End  { focus-column-last; }
+    Mod+Shift+Home { move-column-to-first; }
+    Mod+Shift+End  { move-column-to-last; }
+
+    Mod+WheelScrollUp           { focus-column-right; }
+    Mod+WheelScrollDown         { focus-column-left; }
+    Mod+WheelScrollRight        { focus-column-right; }
+    Mod+WheelScrollLeft         { focus-column-left; }
+    Mod+Ctrl+WheelScrollUp      cooldown-ms=150 { focus-window-or-workspace-up; }
+    Mod+Ctrl+WheelScrollDown    cooldown-ms=150 { focus-window-or-workspace-down; }
+    Mod+Ctrl+WheelScrollRight   cooldown-ms=150 { focus-window-or-workspace-down; }
+    Mod+Ctrl+WheelScrollLeft    cooldown-ms=150 { focus-window-or-workspace-up; }
+    // TODO: fix add the shift variant
+    // TODO: add the literal scroll direction instead if psuedo due to mouse scroll only
+    // TODO: bind TouchpadScroll<direction>
+
+    Mod+Page_Down      { focus-workspace-down; }
+    Mod+Page_Up        { focus-workspace-up; }
+    Mod+U              { focus-workspace-down; }
+    Mod+I              { focus-workspace-up; }
+}

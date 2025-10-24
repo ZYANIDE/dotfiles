@@ -20,7 +20,7 @@
   * [Manifests](#manifests)
   * [Desktop Environments](#desktop-environments)
     * [Arch Linux](#arch-linux)
-      * [Hyprland](#hyprland)
+      * [Niri](#niri)
         * [Preview](#preview)
         * [Packages](#packages)
 
@@ -60,8 +60,8 @@
 
 ### Arch Linux
 
-<details id="hyprland">
-  <summary><b><i>Hyprland</i></b></summary>
+<details id="niri">
+  <summary><b><i>Niri</i></b></summary>
 
   #### Preview
 
@@ -74,7 +74,7 @@
 ---
 
 <div align="center" style="text-align: center">
-  <i>©Copyright Zyanide 2024 - present</i><br>
+  <i>©Copyright Noah Snoeks 2024 - present</i><br>
   <i>Licensed under <a href="LICENSE">MIT</a></i><br>
   <sub>Thanks for visiting :3</sub>
 </div>
