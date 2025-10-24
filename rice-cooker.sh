@@ -181,7 +181,9 @@ upsert_managed_files() (
     # else diff -rq "$source" "$target"; fi
     printf 'Updating %s\n' "$target" >> /dev/tty
     safe_run upsert_file "$source" "$target" "$mode"
-  done <<< "$file_table"
+  done <<EOF
+$file_table
+EOF
 )
 
 : '###################
@@ -189,8 +191,8 @@ upsert_managed_files() (
    ###################'
 
 PROGRAM_NAME="$(basename "$0")"
-PROGRAM_VERSION="v0.3.1"
-PROGRAM_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROGRAM_VERSION="v0.3.2"
+PROGRAM_PATH="$(cd "$(dirname "$0")" && pwd)"
 
 print_version() (
   printf '%s %s\n' "$PROGRAM_NAME" "$PROGRAM_VERSION" >> /dev/tty
