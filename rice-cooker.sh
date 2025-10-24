@@ -138,7 +138,7 @@ install_package_manager() (
     printf ' not found.\n' >> /dev/tty
     printf 'Preparing for installation...\n' >> /dev/tty
     safe_run sh -c "$prepare"
-    printf 'Installing %s...\n' >> /dev/tty
+    printf 'Installing...\n' >> /dev/tty
     safe_run sh -c "$install"
     printf 'Cleaning up...\n' >> /dev/tty
     safe_run sh -c "$cleanup"
