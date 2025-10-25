@@ -195,7 +195,7 @@ assert_manifest_structure() (
   if [ -z "$manifest_version" ]; then die 1 "The manifest is missing the 'Version' property"; fi
   if ! [ "$manifest_version" = '0.1.0' ]; then die 1 "Manifest version '$manifest_version' is not supported"; fi
 
-  manifest_structure="$(cat <<EOF
+  manifest_structure="$(cat <<'EOF'
 .General null,object
 .General.Multilib null,boolean
 .PackageManagers null,object
@@ -225,6 +225,12 @@ EOF
   done <<EOF
 $manifest_structure
 EOF
+
+  # Check if there are packages that use a package manager unlisted in the manifest
+  missing_package_managers="$(yq -r '([.Packages[] | split("/").[0]] | unique | sort) - (.PackageManagers | keys | sort) | .[]' "$manifest_path")"
+  if [ -n "$missing_package_managers" ]; then
+    die 1 "The following package managers are missing from the manifest: $(echo "$missing_package_managers" | tr '\n' ',' | sed 's/,$//; s/,/, /g')"
+  fi
 )
 
 : '###################
@@ -232,7 +238,7 @@ EOF
    ###################'
 
 PROGRAM_NAME="$(basename "$0")"
-PROGRAM_VERSION="v0.3.3"
+PROGRAM_VERSION="v0.3.4"
 PROGRAM_PATH="$(cd "$(dirname "$0")" && pwd)"
 
 print_version() (
