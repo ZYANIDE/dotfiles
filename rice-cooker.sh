@@ -186,12 +186,53 @@ $file_table
 EOF
 )
 
+# assert_manifest_structure <manifest_path>
+assert_manifest_structure() (
+  manifest_path="$1";
+  if ! [ -f "$manifest_path" ]; then die 1 "The manifest could not be found ($manifest_path)"; fi
+  if ! yq . "$manifest_path" >> /dev/null; then die 1 "The provided manifest is not a valid YAML file ($manifest_path)"; fi
+  manifest_version="$(yq -r '.Version // ""' "$manifest_path")"
+  if [ -z "$manifest_version" ]; then die 1 "The manifest is missing the 'Version' property"; fi
+  if ! [ "$manifest_version" = '0.1.0' ]; then die 1 "Manifest version '$manifest_version' is not supported"; fi
+
+  manifest_structure="$(cat <<EOF
+.General null,object
+.General.Multilib null,boolean
+.PackageManagers null,object
+.PackageManagers.* object
+.PackageManagers.*.add_pkg string
+.PackageManagers.*.verify string
+.PackageManagers.*.prepare null,string
+.PackageManagers.*.install null,string
+.PackageManagers.*.cleanup null,string
+.Packages null,array
+.Packages.* string
+.Files null,object
+.Files.*.source string
+.Files.*.mode string
+.Services null,array
+.Services.* string
+.Commands null,string
+EOF
+)"
+
+  while read -r rule; do
+    prop="$(echo "$rule" | awk '{print $1}')"
+    types="$(echo "$rule" | awk '{print $2}')"
+    if ! [ "$(yq "[$(echo "$prop" | sed 's/\.\*/\[\]/') | (type == $(echo "\"$types\"" | sed 's/,/" or type == "/'))] | all" "$manifest_path")" = true ]; then
+      die 1 "Manifest property '$prop' must be $([ -z "$(echo "$types" | grep null)" ] && echo 'defined and ')of type $(echo "$types" | tr ',' ' or ')"
+    fi
+  done <<EOF
+$manifest_structure
+EOF
+)
+
 : '###################
    ###   PROGRAM   ###
    ###################'
 
 PROGRAM_NAME="$(basename "$0")"
-PROGRAM_VERSION="v0.3.2"
+PROGRAM_VERSION="v0.3.3"
 PROGRAM_PATH="$(cd "$(dirname "$0")" && pwd)"
 
 print_version() (
@@ -223,9 +264,9 @@ done
 assert_dependency yq
 
 MANIFEST_PATH="${MANIFEST_PATH:-"$PROGRAM_PATH/manifest.yaml"}"
-if ! [ -f "$MANIFEST_PATH" ]; then die 1 "The manifest could not be found at $MANIFEST_PATH"; fi
+assert_manifest_structure "$MANIFEST_PATH"
 
-enableMultilib=$(yq -r '.General.multilib' "$MANIFEST_PATH")
+enableMultilib=$(yq -r '.General.Multilib' "$MANIFEST_PATH")
 if [ "$enableMultilib" = 'true' ]; then
   printf '\n' >> /dev/tty
   enable_multilib

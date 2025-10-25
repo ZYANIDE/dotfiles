@@ -1,10 +1,11 @@
 # Manifest version
 Version: 0.1.0
 General:
-  multilib: true
+  Multilib: true
 PackageManagers:
   pacman:
     add_pkg: sudo pacman -S $PKGS --noconfirm --needed
+    verify: pacman --version
   yay:
     prepare: |
       rm -rf /tmp/yay
