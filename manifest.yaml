@@ -141,5 +141,3 @@ Files:
 Services:
   - NetworkManager.service
   - cups.service
-Commands: |
-  sherlock init
