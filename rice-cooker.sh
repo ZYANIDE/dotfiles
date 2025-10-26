@@ -31,7 +31,7 @@ die() (
 )
 
 # assert_dependency ...<command>
-assert_dependency() (
+assert_dependencies() (
   for cmd in "$@"; do
     [ -z "$(command -v "$cmd")" ] && printf "Dependency missing: %s\n" "$1" >> /dev/tty && return 1
   done
@@ -84,7 +84,7 @@ prompt_boolean() (
   DEFAULT_INDICATOR="$([ "$DEFAULT" = 'y' ] && echo 'n/Y' || echo 'N/y')"
   while [ "$IN" != 'y' ] && [ "$IN" != 'n' ]; do
     printf '%s' "$1 ($DEFAULT_INDICATOR): " >> /dev/tty
-    read -r IN
+    read -r IN < /dev/tty
     IN="$(echo "${IN:-"$DEFAULT"}" | tr '[:upper:]' '[:lower:]')"
   done
   [ "$IN" = 'y' ] && echo 'true' || echo 'false'
@@ -107,7 +107,7 @@ prompt_text() (
   else PROMPT_HINT='[Empty]'; fi
   while [ -z "${IN+x}" ] || { [ -z "$IN" ] && [ "$is_required" = true ]; } do
     printf '%s' "$1 ($PROMPT_HINT): " >> /dev/tty
-    read -r IN
+    read -r IN < /dev/tty
   done
   [ "$is_hidden" = true ] && stty echo && printf '\n' >> /dev/tty
   echo "${IN:-"$DEFAULT"}"
@@ -150,7 +150,7 @@ install_package_manager() (
 # install_pm_packages <add_pkg_script> <packages>
 install_pm_packages() (
   add_pkg="$1"; packages="$2";
-  printf 'Installing %s packages:\n%s\n' "$package_manager" "${packages:-"[None]"}" >> /dev/tty
+  printf 'Installing and updating %s packages:\n%s\n' "$package_manager" "${packages:-"[None]"}" >> /dev/tty
   if [ -n "$packages" ]; then PKGS="$packages" safe_run sh -c "$add_pkg"; fi
 )
 
@@ -176,10 +176,18 @@ upsert_managed_files() (
     target="$(echo "$file" | awk '{print $2}' | sed "s|~|$HOME|g; s|\$HOME|$HOME|g")"
     source="$(echo "$file" | awk '{print $3}' | sed "s|~|$HOME|g; s|\$HOME|$HOME|g")"
     source="$(join_paths "$MANIFEST_PATH/.." "$source")"
-    # TODO: dont stop script when diff return exit code 1
-    # if ! [ "$(echo $source)" = "$source" ]; then diff -rq "${source%/*}" "$target"
-    # else diff -rq "$source" "$target"; fi
-    printf 'Updating %s\n' "$target" >> /dev/tty
+
+    if ! [ "$(echo $source)" = "$source" ]; then difference="$(diff -rq "${source%/*}" "$target" || true)"
+    else difference="$(diff -rq "$source" "$target" || true)"; fi
+    if [ -n "$difference" ]; then
+      printf "\n$COLOR_YELLOW%s\n$COLOR_RESET" "$difference" >> /dev/tty
+      if ! [ "$FORCE" = true ] && [ "$(prompt_boolean 'Overwrite anyway?' 'n')" = false ]; then
+        printf 'Skipping update...\n' >> /dev/tty
+        continue
+      fi
+    fi
+
+    printf 'Updating files... (%s)\n' "$target" >> /dev/tty
     safe_run upsert_file "$source" "$target" "$mode"
   done <<EOF
 $file_table
@@ -238,7 +246,7 @@ EOF
    ###################'
 
 PROGRAM_NAME="$(basename "$0")"
-PROGRAM_VERSION="v0.3.4"
+PROGRAM_VERSION="v0.4.0"
 PROGRAM_PATH="$(cd "$(dirname "$0")" && pwd)"
 
 print_version() (
@@ -247,27 +255,29 @@ print_version() (
 
 print_help() (
   printf '\n' >> /dev/tty
-  printf 'Usage %s <command> [subcommands...] [operands...] [options...]\n' "$PROGRAM_NAME" >> /dev/tty
+  printf 'Usage %s [options...]\n' "$PROGRAM_NAME" >> /dev/tty
+  printf ' -f --force                             : Overwrite configuration drift\n' >> /dev/tty
   printf ' -m --manifest                          : Path to the manifest\n' >> /dev/tty
   printf ' -p --prune                             : Remove unmanaged, orphaned packages and artefacts\n' >> /dev/tty
-  printf ' -t --dry-run                           : Dry-run test\n' >> /dev/tty
+  printf ' -d --dry-run                           : Dry-run test\n' >> /dev/tty
   printf ' -v --version                           : Shows the program version\n' >> /dev/tty
   printf ' -h --help                              : Shows this prompt\n' >> /dev/tty
   printf '\n' >> /dev/tty
 )
 
-while getopts ':m:ptvh' OPTKEY; do
+while getopts ':fm:pdvh' OPTKEY; do
   case "$OPTKEY" in
+    f) FORCE=true ;;
     m) MANIFEST_PATH="$OPTARG" ;;
     p) PRUNE=true ;;
-    t) DRY_RUN=true ;;
+    d) DRY_RUN=true ;;
     v) print_version && die 0 ;;
     h) print_help && die 0 ;;
     *) die 1 "$PROGRAM_NAME: illegal option -- $OPTARG" ;;
   esac
 done
 
-assert_dependency yq
+assert_dependencies yq diff
 
 MANIFEST_PATH="${MANIFEST_PATH:-"$PROGRAM_PATH/manifest.yaml"}"
 assert_manifest_structure "$MANIFEST_PATH"
@@ -280,6 +290,9 @@ fi
 
 packages="$(yq -r '(.Packages // [])[]' "$MANIFEST_PATH" | tr ' ' '\n' | awk '{gsub(/[\/]/, " "); print}')"
 package_managers="$(yq -r '(.PackageManagers // []) | keys | .[]' "$MANIFEST_PATH")"
+uninstalled_packages="$(xor_list "$(echo "$packages" | awk '{print $2}')" "$(pacman -Qeq | tr '\n' ' ')" | tr '\n' ' ')"
+printf '\n' >> /dev/tty
+printf "${COLOR_GREEN}Package(s) to install:\n%s${COLOR_RESET}\n" "${uninstalled_packages:-[None]}" >> /dev/tty
 for package_manager in $package_managers; do
   prepare="$(yq -r ".PackageManagers.$package_manager.prepare // \"\"" "$MANIFEST_PATH")"
   install="$(yq -r ".PackageManagers.$package_manager.install // \"\"" "$MANIFEST_PATH")"
@@ -301,18 +314,25 @@ if [ "$PRUNE" = true ]; then
   orphaned_packages="$(pacman -Qdtq || true)"
   if [ -n "$unlisted_packages" ] || [ -n "$orphaned_packages" ]; then
     printf ' found some.\n' >> /dev/tty
-    printf 'Pruning...\n' >> /dev/tty
-    safe_run sudo pacman -Rns $unlisted_packages $orphaned_packages --noconfirm
+
+    if [ -n "$unlisted_packages" ]; then
+      printf "${COLOR_RED}Package(s) unlisted in the manifest:\n%s${COLOR_RESET}\n" "${unlisted_packages:-[None]}" >> /dev/tty
+      printf '\n' >> /dev/tty
+      if [ "$FORCE" = true ] || [ "$(
+        printf 'Installed packages not listed in the manifest will be removed\n' >> /dev/tty &&
+        prompt_boolean 'Continue?' 'n'
+      )" = true ]; then
+        printf 'Pruning unlisted packages...\n' >> /dev/tty
+        safe_run sudo pacman -Rns $unlisted_packages --noconfirm
+      fi
+    fi
+
+    printf 'Pruning orphaned packages...\n' >> /dev/tty
+    safe_run sudo pacman -Rns $orphaned_packages --noconfirm
   else
     printf ' nothing found.\nSkipping pruning...\n' >> /dev/tty
   fi
 fi
-
-# Compares which packages are new (not yet in manifest) and/or missing (in manifest but not yet installed)
-new_packages="$(xor_list "$(pacman -Qeq | tr '\n' ' ')" "$(echo "$packages" | awk '{print $2}')" | tr '\n' ' ')"
-printf "\n${COLOR_RED}Package(s) missing in manifest:\n%s${COLOR_RESET}\n" "${new_packages:-[None]}"
-missing_packages="$(xor_list "$(echo "$packages" | awk '{print $2}')" "$(pacman -Qeq | tr '\n' ' ')" | tr '\n' ' ')"
-printf "\n${COLOR_GREEN}Package(s) to install:\n%s${COLOR_RESET}\n" "${missing_packages:-[None]}"
 
 files="$(yq -r '(.Files // {}) | to_entries | .[] | .key as $parent | .value | "\(.mode) \($parent) \(.source)"' "$MANIFEST_PATH")"
 if [ -n "$files" ]; then
