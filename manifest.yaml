@@ -71,7 +71,6 @@ Packages:
   - pacman/gtklock-userinfo-module
   - pacman/swayidle
   - pacman/networkmanager
-  - pacman/wpa_supplicant
   - pacman/pipewire
   - pacman/wireplumber
   - pacman/pipewire-audio
